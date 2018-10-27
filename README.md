@@ -1,50 +1,53 @@
-# Homebridge Air Conditioner with ANAVI Infrared
+# Homebridge Air Conditioner with LIRC
 
-[Homebridge](https://github.com/nfarina/homebridge) plugin that uses [ANAVI Infrared](http://anavi.technology/#products) to drive a “dumb” air conditioner with a unidirectional remote with power, up, and down commands.
+The plugin was modified from [homebridge-anavi-infrared-aircon](https://github.com/zwaldowski/homebridge-anavi-infrared-aircon).
 
-The plugin was designed and tested on [Raspberry Pi Zero W](https://www.raspberrypi.org/products/raspberry-pi-zero-w/).
+(AUTO mode was set to be the same as OFF mode because SIRI will set AUTO mode when be asked to turn off.)
 
 ## Prerequisites
 
-- Enable I2C.
-- Enable LIRC module overlay.
-- Update `/etc/lirc/lirc_options.conf` and `/etc/lirc/hardware.conf` for the hardware.
-- Reboot.
-- Install packages. For Raspbian Stretch:
+Make LIRC worked with your AC.
 
-```shell
-# apt install nodejs-legacy npm lirc i2c-tools libavahi-compat-libdnssd-dev
-```
-
-- Create LIRC configuration.
-- Install [Homebridge](https://github.com/nfarina/homebridge#installation).
-
-### Further reading
-
-- [“Setting Up LIRC on the RaspberryPi”](http://alexba.in/blog/2013/01/06/setting-up-lirc-on-the-raspberrypi/)
-- [“LIRC - Configuration guide”](http://www.lirc.org/html/configuration-guide.html)
-- [“LIRC - `irrecord` manual”](http://www.lirc.org/html/irrecord.html)
+Make sure LIRC command works:
+ - OFF MODE:  `irsend SEND_ONCE YOUR_DEVICE_NAME off`
+ - HEAT MODE: `irsend SEND_ONCE YOUR_DEVICE_NAME heat_CELSIUS_TEMP` (ex: heat_24)
+ - COOL MODE: `irsend SEND_ONCE YOUR_DEVICE_NAME cool_CELSIUS_TEMP` (ex: cool_19)
 
 ## Installation
 
 ```shell
-# npm install -g homebridge homebriage-anavi-infrared-aircon
+# npm install -g homebriage-lirc-aircon
 ```
 
-Update your configuration to include a `aircon-ir-remote` accessory. See an example at [`sample-config.json`](https://github.com/zwaldowski/homebridge-anavi-infrared-aircon/blob/master/config-sample.json).
+# Config example
 
-## Persistent Installation
+- `minSetpoint` and `maxSetpoint` make the range you can set in Homekit.
 
-See [“Running Homebridge on Bootup”](https://github.com/nfarina/homebridge/wiki/Running-Homebridge-on-a-Raspberry-Pi#running-homebridge-on-bootup-systemd).
+- `defaultSetpoint` set the default temperature when Homebridge starts.
 
-In condensed form, start with this [gist](https://gist.github.com/johannrichard/0ad0de1feb6adb9eb61a/) and then:
+- `temp` set the way to get current room temperature(ex：DS18B20 module), remove `temp` node and it will be set to 20℃.
 
-```shell
-# mkdir /var/lib/homebridge
-# useradd --system homebridge
-# usermod -a -G i2c homebridge
-# systemctl daemon-reload
-# systemctl enable homebridge
-# systemctl start homebridge
-$ systemctl status homebridge
+
+```json
+{
+  "accessories": [
+    {
+      "accessory": "aircon-ir-remote",
+      "name": "Air Conditioner",
+      "minSetpoint": 16,
+      "defaultSetpoint": 20,
+      "maxSetpoint": 30,
+      "ir": {
+        "name": "lirc_device_name"
+      },
+      "temp": {
+        "command": "cat /sys/bus/w1/devices/28-01131650xxx/w1_slave |grep t= | cut -d '=' -f 2",
+        "multiple": 1000
+      }
+    }
+  ]
+}
 ```
+# More
+
+See https://github.com/zwaldowski/homebridge-anavi-infrared-aircon/blob/master/README.md
