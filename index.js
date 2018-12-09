@@ -86,13 +86,13 @@ class AirConAccessory {
             })
         } else if ((value === Characteristic.TargetHeatingCoolingState.HEAT) && (this.heatingCoolingState !== Characteristic.TargetHeatingCoolingState.HEAT)) {
             this.heatingCoolingState = Characteristic.TargetHeatingCoolingState.HEAT
-            this.remoteSend(`cool_${this.currentSetpoint}`, function () {
+            this.remoteSend(`heat_${this.currentSetpoint}`, function () {
                 callback(null, Characteristic.TargetHeatingCoolingState.HEAT)
             })
         } else if ((value === Characteristic.TargetHeatingCoolingState.AUTO) && (this.heatingCoolingState !== Characteristic.TargetHeatingCoolingState.AUTO)) {
             this.heatingCoolingState = Characteristic.TargetHeatingCoolingState.HEAT
             this.remoteSend(`off`, function () {
-                callback(null, Characteristic.TargetHeatingCoolingState.HEAT)
+                callback(null, Characteristic.TargetHeatingCoolingState.OFF)
             })
         }
         else {
@@ -124,13 +124,13 @@ class AirConAccessory {
 
         this.log('Set temperature to %s.', newValue)
 
-        this.setTargetHeatingCoolingState(Characteristic.TargetHeatingCoolingState.COOL, function (error) {
+        this.setTargetHeatingCoolingState(that.heatingCoolingState, function (error) {
             if (error) {
                 callback(error)
                 return
             }
 
-            that.tempRemoteSend(newValue, this.heatingCoolingState, callback)
+            that.tempRemoteSend(newValue, that.heatingCoolingState, callback)
         }.bind(this))
     }
 
