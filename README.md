@@ -16,7 +16,7 @@ Make sure LIRC command works:
 ## Installation
 
 ```shell
-# npm install -g homebriage-lirc-aircon
+# npm install -g homebridge-lirc-aircon
 ```
 
 # Config example
