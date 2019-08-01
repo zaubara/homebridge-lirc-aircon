@@ -109,7 +109,7 @@ class AirConAccessory {
             })
         } else if ((value === Characteristic.TargetHeatingCoolingState.HEAT) && (this.heatingCoolingState !== Characteristic.TargetHeatingCoolingState.HEAT)) {
             this.heatingCoolingState = Characteristic.TargetHeatingCoolingState.HEAT
-            this.remoteSend(`${this.config.ir && this.config.ir.coolPrefix || 'heat_'}${this.currentSetpoint}`, function () {
+            this.remoteSend(`${this.config.ir && this.config.ir.heatPrefix || 'heat_'}${this.currentSetpoint}`, function () {
                 callback(null, Characteristic.TargetHeatingCoolingState.HEAT)
             })
         } else if ((value === Characteristic.TargetHeatingCoolingState.AUTO) && (this.heatingCoolingState !== Characteristic.TargetHeatingCoolingState.AUTO)) {
