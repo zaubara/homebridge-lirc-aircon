@@ -34,6 +34,23 @@ class AirConAccessory {
                     }
                 });
         }
+        this.readHumidity = function (callback) {
+            if (!config.humid) {
+                callback(50)
+                return
+            }
+            var exec = require('child_process').exec;
+            exec(config.humid.command,
+                function (error, stdout, stderr) {
+                    var temperature = Number(stdout) / config.humid.multiple
+                    callback(temperature.toFixed(1));
+
+                    if (error !== null) {
+                        console.log('exec error: ' + error);
+                        callback(0.1);
+                    }
+                });
+        }
         //
         this.celsiusToDevice = Math.round
 
@@ -59,9 +76,15 @@ class AirConAccessory {
 
     // get room temp
     getCurrentTemperature(callback) {
-
         this.readTemperature(function (tempInC) {
             callback(null, tempInC)
+        })
+    }
+
+    // get humidity
+    getCurrentHumidity(callback) {
+        this.readHumidity(function (humidInC) {
+            callback(null, humidInC)
         })
     }
 
@@ -76,22 +99,22 @@ class AirConAccessory {
 
         if ((value === Characteristic.TargetHeatingCoolingState.COOL) && (this.heatingCoolingState !== Characteristic.TargetHeatingCoolingState.COOL)) {
             this.heatingCoolingState = Characteristic.TargetHeatingCoolingState.COOL
-            this.remoteSend(`cool_${this.currentSetpoint}`, function () {
+            this.remoteSend(`${this.config.ir && this.config.ir.coolPrefix || 'cool_'}${this.currentSetpoint}`, function () {
                 callback(null, Characteristic.TargetHeatingCoolingState.COOL)
             })
         } else if ((value === Characteristic.TargetHeatingCoolingState.OFF) && (this.heatingCoolingState !== Characteristic.TargetHeatingCoolingState.OFF)) {
             this.heatingCoolingState = Characteristic.TargetHeatingCoolingState.OFF
-            this.remoteSend('off', function () {
+            this.remoteSend(`${this.config.ir && this.config.ir.off || 'off'}`, function () {
                 callback(null, Characteristic.TargetHeatingCoolingState.OFF)
             })
         } else if ((value === Characteristic.TargetHeatingCoolingState.HEAT) && (this.heatingCoolingState !== Characteristic.TargetHeatingCoolingState.HEAT)) {
             this.heatingCoolingState = Characteristic.TargetHeatingCoolingState.HEAT
-            this.remoteSend(`heat_${this.currentSetpoint}`, function () {
+            this.remoteSend(`${this.config.ir && this.config.ir.coolPrefix || 'heat_'}${this.currentSetpoint}`, function () {
                 callback(null, Characteristic.TargetHeatingCoolingState.HEAT)
             })
         } else if ((value === Characteristic.TargetHeatingCoolingState.AUTO) && (this.heatingCoolingState !== Characteristic.TargetHeatingCoolingState.AUTO)) {
             this.heatingCoolingState = Characteristic.TargetHeatingCoolingState.HEAT
-            this.remoteSend(`off`, function () {
+            this.remoteSend(`${this.config.ir && this.config.ir.off || 'off'}`, function () {
                 callback(null, Characteristic.TargetHeatingCoolingState.OFF)
             })
         }
@@ -106,11 +129,11 @@ class AirConAccessory {
     }
 
     tempRemoteSend(temp, mode, callback) {
-        this.log(`temp: ${temp},mode: ${mode}`)
+        this.log(`temp: ${temp}, mode: ${mode}`)
         if (mode === Characteristic.TargetHeatingCoolingState.COOL) {
-            this.remoteSend('cool_' + String(temp), callback)
+            this.remoteSend(`${this.config.ir && this.config.ir.coolPrefix || 'cool_'}${temp}`, callback)
         } else if (mode === Characteristic.TargetHeatingCoolingState.HEAT) {
-            this.remoteSend('heat_' + String(temp), callback)
+            this.remoteSend(`${this.config.ir && this.config.ir.heatPrefix || 'cool_'}${temp}`, callback)
         } else {
             callback()
         }
@@ -147,6 +170,12 @@ class AirConAccessory {
         service
             .getCharacteristic(Characteristic.CurrentTemperature)
             .on('get', this.getCurrentTemperature.bind(this))
+        
+        if (config.humid) {
+            service
+                .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+                .on('get', this.getCurrentHumidity.bind(this))
+        }
 
         if (config.ir && config.ir.name) {
             const lirc = require('lirc_node')
